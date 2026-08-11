@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   enviarTransferencia,
   listarSolicitudes,
+  listarOfertas,
 } from "../servicios/donacionesCliente";
 import "./DonacionesYeventosKf.css";
 
@@ -11,61 +12,122 @@ const TransferirDonacion = ({ idOrganizacionDonante }) => {
   const [descripcion, setDescripcion] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [mensaje, setMensaje] = useState("");
+
   const [solicitudesExternas, setSolicitudesExternas] = useState([]);
+  const [ofertas, setOfertas] = useState([]);
+
   const [idSolicitudSeleccionada, setIdSolicitudSeleccionada] = useState("");
   const [idOrgReceptoraSeleccionada, setIdOrgReceptoraSeleccionada] =
     useState("");
 
+  // --------------------------------------------------
+  // CARGAR SOLICITUDES Y OFERTAS
+  // --------------------------------------------------
+
   useEffect(() => {
-    const fetchSolicitudes = async () => {
+    const fetchDatos = async () => {
       try {
-        const lista = await listarSolicitudes();
-        setSolicitudesExternas(lista);
+        const solicitudes = await listarSolicitudes();
+        const ofertasRecibidas = await listarOfertas();
+
+        console.log("[TransferirDonacion] Solicitudes recibidas:", solicitudes);
+        console.log("[TransferirDonacion] Ofertas recibidas:", ofertasRecibidas);
+
+        setSolicitudesExternas(solicitudes);
+        setOfertas(ofertasRecibidas);
       } catch (err) {
-        console.error("Error al listar solicitudes externas:", err);
+        console.error(
+          "[TransferirDonacion] Error al listar solicitudes/ofertas:",
+          err
+        );
       }
     };
-    fetchSolicitudes();
-    const interval = setInterval(fetchSolicitudes, 5000);
+
+    fetchDatos();
+
+    const interval = setInterval(fetchDatos, 5000);
+
     return () => clearInterval(interval);
   }, []);
 
+  // --------------------------------------------------
+  // AGREGAR ITEM A LA TRANSFERENCIA
+  // --------------------------------------------------
+
   const agregarItem = () => {
-    if (categoria && descripcion && cantidad !== "") {
-      const nuevoItem = {
-        categoria,
-        descripcion,
-        cantidad: parseInt(cantidad),
-      };
-      setDonaciones([...donaciones, nuevoItem]);
-      setCategoria("");
-      setDescripcion("");
-      setCantidad("");
-    } else {
+    const cantidadNumerica = parseInt(cantidad);
+
+    if (!categoria || !descripcion || cantidad === "") {
       setMensaje(
         "Debe completar categoría, descripción y cantidad para agregar un ítem."
       );
+      return;
     }
-  };
 
-  const seleccionarSolicitud = (solicitud) => {
-    const itemsConCantidad = solicitud.donaciones.map((d) => ({
-      categoria: d.categoria,
-      descripcion: d.descripcion,
-      cantidad: d.cantidad !== undefined ? d.cantidad : "",
-    }));
+    if (isNaN(cantidadNumerica) || cantidadNumerica <= 0) {
+      setMensaje("La cantidad debe ser mayor a 0.");
+      return;
+    }
 
-    setDonaciones(itemsConCantidad);
-    setIdSolicitudSeleccionada(solicitud.idSolicitud);
-    setIdOrgReceptoraSeleccionada(solicitud.idOrganizacion);
+    const nuevoItem = {
+      categoria,
+      descripcion,
+      cantidad: cantidadNumerica,
+    };
+
+    setDonaciones([...donaciones, nuevoItem]);
+
+    setCategoria("");
+    setDescripcion("");
+    setCantidad("");
     setMensaje("");
   };
 
+  // --------------------------------------------------
+  // SELECCIONAR UNA SOLICITUD EXTERNA
+  // --------------------------------------------------
+
+  const seleccionarSolicitud = (solicitud) => {
+    setIdSolicitudSeleccionada(solicitud.idSolicitud);
+    setIdOrgReceptoraSeleccionada(solicitud.idOrganizacion);
+
+    /*
+     * Mostramos el primer artículo solicitado en el formulario
+     * como ayuda, pero NO lo agregamos automáticamente
+     * a la transferencia.
+     */
+    if (solicitud.donaciones && solicitud.donaciones.length > 0) {
+      const primerItem = solicitud.donaciones[0];
+
+      setCategoria(primerItem.categoria || "");
+      setDescripcion(primerItem.descripcion || "");
+      setCantidad("");
+    } else {
+      setCategoria("");
+      setDescripcion("");
+      setCantidad("");
+    }
+
+    // Muy importante:
+    // la lista empieza vacía hasta que el usuario agregue
+    // explícitamente la cantidad que quiere donar.
+    setDonaciones([]);
+
+    setMensaje("");
+  };
+
+  // --------------------------------------------------
+  // ENVIAR TRANSFERENCIA
+  // --------------------------------------------------
+
   const enviarTransferenciaClick = async () => {
     if (!donaciones.length) {
-      setMensaje("Agrega al menos un ítem con cantidad antes de transferir.");
+      setMensaje(
+        "Agrega al menos un ítem con cantidad antes de transferir."
+      );
       return;
     }
+
     if (!idSolicitudSeleccionada || !idOrgReceptoraSeleccionada) {
       setMensaje("Selecciona una solicitud antes de transferir.");
       return;
@@ -79,22 +141,64 @@ const TransferirDonacion = ({ idOrganizacionDonante }) => {
         donaciones
       );
 
-      console.log("[TransferirDonacion] Respuesta del backend:", resp);
+      console.log(
+        "[TransferirDonacion] Respuesta del backend:",
+        resp
+      );
+
       setMensaje(
         `Transferencia enviada para la solicitud ${idSolicitudSeleccionada}`
       );
+
       setDonaciones([]);
       setIdSolicitudSeleccionada("");
       setIdOrgReceptoraSeleccionada("");
+      setCategoria("");
+      setDescripcion("");
+      setCantidad("");
     } catch (err) {
-      console.error("[TransferirDonacion] Error al enviar transferencia:", err);
+      console.error(
+        "[TransferirDonacion] Error al enviar transferencia:",
+        err
+      );
+
       setMensaje("Error al realizar transferencia");
     }
   };
 
+  // --------------------------------------------------
+  // ORDENAR SOLICITUDES
+  // --------------------------------------------------
+
+  /*
+   * Las solicitudes propias siempre aparecen primero.
+   * Las externas aparecen después.
+   *
+   * idOrganizacionDonante se convierte a String para evitar
+   * problemas si viene como número desde algún lugar.
+   */
+  const solicitudesOrdenadas = [...solicitudesExternas].sort((a, b) => {
+    const aPropia =
+      String(a.idOrganizacion) === String(idOrganizacionDonante);
+
+    const bPropia =
+      String(b.idOrganizacion) === String(idOrganizacionDonante);
+
+    if (aPropia && !bPropia) return -1;
+    if (!aPropia && bPropia) return 1;
+
+    return 0;
+  });
+
+  // --------------------------------------------------
+  // RENDER
+  // --------------------------------------------------
+
   return (
     <div className="main-container">
       <h2>Transferir Donaciones</h2>
+
+      {/* FORMULARIO */}
 
       <div className="input-row">
         <input
@@ -103,31 +207,36 @@ const TransferirDonacion = ({ idOrganizacionDonante }) => {
           value={categoria}
           onChange={(e) => setCategoria(e.target.value)}
         />
+
         <input
           type="text"
           placeholder="Descripción"
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
         />
+
         <input
           type="number"
           placeholder="Cantidad"
           value={cantidad}
           onChange={(e) => setCantidad(e.target.value)}
         />
+
         <button className="style-btn" onClick={agregarItem}>
           Agregar
         </button>
       </div>
 
+      {/* ITEMS QUE EL USUARIO VA A TRANSFERIR */}
+
       {donaciones.length > 0 && (
         <>
           <h3>Ítems a transferir</h3>
+
           <ul>
             {donaciones.map((d, i) => (
               <li key={i}>
-                {d.categoria} - {d.descripcion} (
-                {d.cantidad !== "" ? d.cantidad : "sin cantidad"})
+                {d.categoria} - {d.descripcion} ({d.cantidad})
               </li>
             ))}
           </ul>
@@ -146,32 +255,57 @@ const TransferirDonacion = ({ idOrganizacionDonante }) => {
         Enviar Transferencia
       </button>
 
-      <h3>Solicitudes Externas</h3>
-      {solicitudesExternas.length ? (
+      {/* ==================================================
+          SOLICITUDES
+          ================================================== */}
+
+      <h3>Solicitudes de Donaciones</h3>
+
+      {solicitudesOrdenadas.length > 0 ? (
         <ul>
-          {solicitudesExternas.map((sol, i) => {
-            const esPropia = sol.idOrganizacion === "1";
+          {solicitudesOrdenadas.map((sol, i) => {
+            const esPropia =
+              String(sol.idOrganizacion) ===
+              String(idOrganizacionDonante);
+
             return (
               <li
                 className={`list-solicitudes ${
                   esPropia ? "propia" : "externa"
                 }`}
-                key={i}
-                >
+                key={`${sol.idSolicitud}-${i}`}
+              >
                 <strong>
                   {sol.idSolicitud}
                   {esPropia && " (Propia)"}
                 </strong>
+
                 {" — "}
-                {sol.donaciones.length} ítems
+
+                Organización {sol.idOrganizacion}
+
+                {" — "}
+
+                {sol.donaciones?.length || 0} ítems
+
                 <ul>
-                  {sol.donaciones.map((d, j) => (
+                  {(sol.donaciones || []).map((d, j) => (
                     <li key={j}>
-                      {d.categoria} - {d.descripcion} (
-                      {d.cantidad || "sin cantidad"})
+                      {d.categoria} - {d.descripcion}
+                      {d.cantidad !== undefined &&
+                        d.cantidad !== null &&
+                        d.cantidad !== 0
+                        ? ` (${d.cantidad})`
+                        : ""}
                     </li>
                   ))}
                 </ul>
+
+                {/* 
+                  Las solicitudes propias NO se pueden transferir
+                  porque son solicitudes de nuestra organización.
+                */}
+
                 {!esPropia && (
                   <button
                     className="style-btn"
@@ -185,8 +319,58 @@ const TransferirDonacion = ({ idOrganizacionDonante }) => {
           })}
         </ul>
       ) : (
-        <p>No hay solicitudes externas.</p>
+        <p>No hay solicitudes de donaciones.</p>
       )}
+
+      {/* ==================================================
+          OFERTAS
+          ================================================== */}
+
+      <h3>Ofertas de Donaciones</h3>
+
+      {ofertas.length > 0 ? (
+        <ul>
+          {ofertas.map((oferta, i) => {
+            const esPropia =
+              String(oferta.idOrganizacionDonante) ===
+              String(idOrganizacionDonante);
+
+            return (
+              <li
+                className={`list-solicitudes ${
+                  esPropia ? "propia" : "externa"
+                }`}
+                key={oferta.idOferta || i}
+              >
+                <strong>
+                  {oferta.idOferta}
+                  {esPropia && " (Propia)"}
+                </strong>
+
+                {" — "}
+
+                Organización {oferta.idOrganizacionDonante}
+
+                {" — "}
+
+                {oferta.donaciones?.length || 0} ítems
+
+                <ul>
+                  {(oferta.donaciones || []).map((d, j) => (
+                    <li key={j}>
+                      {d.categoria} - {d.descripcion} ({d.cantidad})
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p>No hay ofertas de donaciones disponibles.</p>
+      )}
+
+      {/* MENSAJES */}
 
       {mensaje && <p className="mensaje">{mensaje}</p>}
     </div>
