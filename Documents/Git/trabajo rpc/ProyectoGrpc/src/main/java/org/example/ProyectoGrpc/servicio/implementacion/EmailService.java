@@ -11,14 +11,17 @@ public class EmailService {
 
 	@Async
     public void enviarPassword(String toEmail, String password) {
-        final String fromEmail = "magosh90@gmail.com";  
-        final String emailPassword = "oewntczrvekqpvap"; 
+        final String fromEmail = System.getenv("MAIL_USERNAME");
+        final String emailPassword = System.getenv("MAIL_PASSWORD");
 
         Properties props = new Properties();
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
+
+        System.out.println("MAIL_USERNAME = " + fromEmail);
+        System.out.println("MAIL_PASSWORD configurada = " + (emailPassword != null && !emailPassword.isBlank()));
 
         Session session = Session.getInstance(props, new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
