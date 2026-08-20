@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { enviarSolicitud, darBajaSolicitud } from "../servicios/donacionesCliente";
+import { enviarSolicitud, darBajaSolicitud, listarSolicitudes } from "../servicios/donacionesCliente";
 import "./DonacionesYeventosKf.css";
 
 const SolicitarDonacion = ({ idOrganizacion }) => {
@@ -15,8 +15,36 @@ const SolicitarDonacion = ({ idOrganizacion }) => {
 
 
   useEffect(() => {
-    console.log("[SolicitarDonacion] componente renderizado");
-  }, []);
+  const cargarSolicitudes = async () => {
+    try {
+      const solicitudes = await listarSolicitudes();
+
+      console.log(
+        "[SolicitarDonacion] Todas las solicitudes:",
+        solicitudes
+      );
+
+      const propias = solicitudes.filter(
+        (sol) =>
+          String(sol.idOrganizacion) === String(idOrganizacion)
+      );
+
+      console.log(
+        "[SolicitarDonacion] Solicitudes propias:",
+        propias
+      );
+
+      setSolicitudesEnviadas(propias);
+    } catch (err) {
+      console.error(
+        "[SolicitarDonacion] Error al cargar solicitudes:",
+        err
+      );
+    }
+  };
+
+  cargarSolicitudes();
+}, [idOrganizacion]);
 
   const agregarItem = () => {
     if (categoria && descripcion) {
