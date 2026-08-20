@@ -13,6 +13,9 @@ import {
 import "./Evento.css";
 
 const Evento = ({ usuarioLogueado }) => {
+
+  console.log("USUARIO LOGUEADO:", usuarioLogueado);
+  
   const [eventos, setEventos] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [inventario, setInventario] = useState([]);
@@ -54,6 +57,13 @@ const Evento = ({ usuarioLogueado }) => {
 
   const handleCrearEvento = async () => {
     if (!nuevoNombre || !nuevaDescripcion || !nuevaFechaHora) return;
+    if (
+  usuarioLogueado.rol !== "PRESIDENTE" &&
+  usuarioLogueado.rol !== "COORDINADOR"
+) {
+  alert("❌ Solo PRESIDENTE o COORDINADOR pueden crear eventos");
+  return;
+}
     try {
       const fechaConSegundos = `${nuevaFechaHora}:00`;
       await altaEvento({
