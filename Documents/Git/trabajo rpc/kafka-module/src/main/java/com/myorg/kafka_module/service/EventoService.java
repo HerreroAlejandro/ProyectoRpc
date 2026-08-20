@@ -1,5 +1,6 @@
 package com.myorg.kafka_module.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.kafka.core.KafkaTemplate;
@@ -48,6 +49,9 @@ public class EventoService {
     }
 
     public List<EventoDTO> obtenerEventosExternos() {
-        return consumer.getEventosExternos();
+        return consumer.getEventosExternos()
+                .stream()
+                .filter(e -> !e.getIdOrganizacion().equals("ONG001"))
+                .toList();
     }
 }
