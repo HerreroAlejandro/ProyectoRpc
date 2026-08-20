@@ -7,12 +7,16 @@ const client = new EventosServiceClient("http://localhost:8081");
 export const listarEventosExternos = () => {
     return new Promise((resolve, reject) => {
         const request = new Vacio();
+
         client.listarEventosExternos(request, {}, (err, response) => {
             if (err) {
                 console.error("Error al listar eventos:", err);
                 return reject(err);
             }
-            resolve(response.getEventosList().map((e) => e.toObject()));
+
+            const eventos = response.getEventosList().map((e) => e.toObject());
+
+            resolve(eventos);
         });
     });
 };
