@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
     listarEventosExternos,
-    listarEventosPropios,
     publicarEvento,
     darBajaEvento,
     notificarAdhesion,
@@ -11,7 +10,6 @@ import "./DonacionesYeventosKf.css";
 export default function EventosExternos({ usuarioLogueado }) {
 
     const [eventos, setEventos] = useState([]);
-    const [misEventos, setMisEventos] = useState([]);
     const [nuevoEvento, setNuevoEvento] = useState({
         idOrganizacion: "ONG001",
         idEvento: "",
@@ -20,23 +18,23 @@ export default function EventosExternos({ usuarioLogueado }) {
         fechaHora: "",
     });
 
-    // !Carga los eventos externos cada 5 segundos
     useEffect(() => {
-        const fetchEventos = async () => {
-            try {
-                const externos = await listarEventosExternos();
-                setEventos(externos);
+    const fetchEventos = async () => {
+        try {
+            const externos = await listarEventosExternos();
+            setEventos(externos);
 
-                const propios = await listarEventosPropios();
-                setMisEventos(propios);
-            } catch (err) {
-                console.error("Error al listar eventos:", err);
-            }
-        };
-        fetchEventos();
-        const interval = setInterval(fetchEventos, 5000);
-        return () => clearInterval(interval);
-    }, []);
+        } catch (err) {
+            console.error("Error al listar eventos:", err);
+        }
+    };
+
+    fetchEventos();
+
+    const interval = setInterval(fetchEventos, 5000);
+
+    return () => clearInterval(interval);
+}, []);
 
 
     const handleChange = (e) => {
@@ -85,18 +83,6 @@ export default function EventosExternos({ usuarioLogueado }) {
             console.error("Error al dar de baja evento:", err);
         }
     };
-
-    useEffect(() => {
-        const fetchEventos = async () => {
-            const externos = await listarEventosExternos();
-            setEventos(externos);
-            const propios = await listarEventosPropios();
-            setMisEventos(propios);
-        };
-        fetchEventos();
-        const interval = setInterval(fetchEventos, 5000);
-        return () => clearInterval(interval);
-    }, []);
 
     const [eventosAdheridos, setEventosAdheridos] = useState([]);
     const handleAdherirse = async (evento) => {
@@ -152,27 +138,6 @@ export default function EventosExternos({ usuarioLogueado }) {
                 />
                 <button className="style-btn" onClick={handlePublicar}>Publicar evento</button>
             </div>
-            <h3>Mis eventos</h3>
-            <ul>
-                {misEventos.map((e) => (
-                    <li className="list-solicitudes" key={e.idevento}>
-                        <b>{e.nombre}</b> — {e.descripcion}
-                        <br />
-                        Fecha:{" "}
-                        {e.fechahora
-                            ? new Date(e.fechahora).toLocaleString("es-AR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit"
-                            })
-                            : "Sin fecha"}
-                        <br />
-                        <button className="style-btn" onClick={() => handleBaja(e.idevento)}>Dar de baja</button>
-                    </li>
-                ))}
-            </ul>
 
             <h3>Eventos de otras ONG's</h3>
             <ul>
