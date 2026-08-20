@@ -111,10 +111,10 @@ public class DonacionesService {
     public List<SolicitudDonacionDTO> obtenerSolicitudesRecibidas() {
         return solicitudConsumer.getSolicitudesRecibidas();
     }
-
+/*
     public List<TransferenciaDonacionDTO> obtenerTransferenciasRecibidas() {
         return transferenciaConsumer.getTransferenciasRecibidas();
-    }
+    }*/
 
     public List<OfertaDonacionDTO> obtenerOfertasRecibidas() {
         return ofertaConsumer.getOfertasRecibidas();
@@ -148,7 +148,4 @@ public class DonacionesService {
 
     return existe;
 }
-
-
-
 }
