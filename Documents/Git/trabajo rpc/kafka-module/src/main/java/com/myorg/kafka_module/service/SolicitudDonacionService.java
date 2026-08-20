@@ -1,6 +1,7 @@
 package com.myorg.kafka_module.service;
 
 import com.myorg.kafka_module.consumer.SolicitudDonacionConsumer;
+import com.myorg.kafka_module.dto.BajaSolicitudDTO;
 import com.myorg.kafka_module.dto.SolicitudDonacionDTO;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class SolicitudDonacionService {
         System.out.println("📤 Solicitud enviada: " + solicitud);
     }
 
-    public void enviarBajaSolicitud(SolicitudDonacionDTO baja) {
+    public void enviarBajaSolicitud(BajaSolicitudDTO baja) {
         kafkaTemplate.send(TOPIC_BAJA, baja);
         System.out.println("Solicitud enviada (BAJA): " + baja);
     }
