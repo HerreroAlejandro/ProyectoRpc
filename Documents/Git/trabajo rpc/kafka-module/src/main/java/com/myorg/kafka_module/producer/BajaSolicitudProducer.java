@@ -12,11 +12,10 @@ public class BajaSolicitudProducer {
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
 
-    private static final String TOPIC = "baja-solicitud";
+    private static final String TOPIC = "baja-solicitud-donaciones";
 
     public void enviarBaja(BajaSolicitudDTO baja) {
         kafkaTemplate.send(TOPIC, baja);
         System.out.println("BajaSolicitudDTO enviado a Kafka: " + baja);
     }
-    
 }
