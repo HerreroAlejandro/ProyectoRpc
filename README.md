@@ -32,7 +32,7 @@ mensajes.
 
 ## Funcionalidades principales
 
-- Gestión de usuarios y roles.
+- Gestión segura de credenciales de usuarios y roles.
 - Gestión de inventario de donaciones.
 - Solicitudes y ofertas de donaciones.
 - Transferencias de donaciones entre organizaciones.
