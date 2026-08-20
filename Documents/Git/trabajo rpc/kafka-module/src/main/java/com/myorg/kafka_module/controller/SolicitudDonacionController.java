@@ -1,5 +1,6 @@
-package com.myorg.kafka_module.controller;
+/*package com.myorg.kafka_module.controller;
 
+import com.myorg.kafka_module.dto.BajaSolicitudDTO;
 import com.myorg.kafka_module.dto.SolicitudDonacionDTO;
 import com.myorg.kafka_module.service.SolicitudDonacionService;
 
@@ -24,9 +25,9 @@ public class SolicitudDonacionController {
     }
 
     @PostMapping("/baja")
-    public String darBajaSolicitud(@RequestBody SolicitudDonacionDTO baja) {
+    public String darBajaSolicitud(@RequestBody BajaSolicitudDTO baja) {
         service.enviarBajaSolicitud(baja);
-        return "Baja de solicitud enviada a Kafka: " + baja.getIdSolicitud();
+        return "Baja de solicitud enviada a Kafka: " + baja.getIdSolicitudBaja();
     }
 
     @GetMapping("/externas")
@@ -36,3 +37,4 @@ public class SolicitudDonacionController {
 
 }
 
+*/

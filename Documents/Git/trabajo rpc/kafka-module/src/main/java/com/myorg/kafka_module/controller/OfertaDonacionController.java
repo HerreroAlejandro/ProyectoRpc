@@ -1,4 +1,4 @@
-package com.myorg.kafka_module.controller;
+/*package com.myorg.kafka_module.controller;
 
 import com.myorg.kafka_module.dto.OfertaDonacionDTO;
 import com.myorg.kafka_module.consumer.OfertaDonacionConsumer;
@@ -29,3 +29,4 @@ public class OfertaDonacionController {
         return ofertaConsumer.getOfertasRecibidas();
     }
 }
+*/
