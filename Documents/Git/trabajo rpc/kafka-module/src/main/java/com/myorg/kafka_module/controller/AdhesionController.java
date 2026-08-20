@@ -1,4 +1,4 @@
-package com.myorg.kafka_module.controller;
+/*package com.myorg.kafka_module.controller;
 
 import com.myorg.kafka_module.dto.AdhesionDTO;
 import com.myorg.kafka_module.service.AdhesionService;
@@ -24,3 +24,4 @@ public class AdhesionController {
         return service.obtenerAdhesionesRecibidas();
     }
 }
+*/

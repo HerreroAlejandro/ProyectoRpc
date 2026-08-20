@@ -1,4 +1,4 @@
-package com.myorg.kafka_module.controller;
+/*package com.myorg.kafka_module.controller;
 
 import com.myorg.kafka_module.dto.EventoDTO;
 import com.myorg.kafka_module.service.EventoService;
@@ -24,4 +24,4 @@ public class EventoController {
         return service.obtenerEventosExternos();
     }
 
-}
+}*/
