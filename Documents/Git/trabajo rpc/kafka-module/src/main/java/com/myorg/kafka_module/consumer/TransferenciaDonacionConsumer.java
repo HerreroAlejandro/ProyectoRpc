@@ -29,7 +29,7 @@ public class TransferenciaDonacionConsumer {
 
     }
 
-    public List<TransferenciaDonacionDTO> getTransferenciasRecibidas() {
+  /*  public List<TransferenciaDonacionDTO> getTransferenciasRecibidas() {
         return transferenciasRecibidas;
-    }
+    }*/
 }
