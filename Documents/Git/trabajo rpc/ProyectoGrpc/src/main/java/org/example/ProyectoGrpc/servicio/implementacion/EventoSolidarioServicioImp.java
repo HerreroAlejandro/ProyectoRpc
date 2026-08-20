@@ -1,5 +1,6 @@
 package org.example.ProyectoGrpc.servicio.implementacion;
 
+import jakarta.annotation.PostConstruct;
 import org.example.ProyectoGrpc.entidad.DonacionesEvento;
 import org.example.ProyectoGrpc.entidad.EventoSolidario;
 import org.example.ProyectoGrpc.entidad.InventarioDonaciones;
@@ -12,6 +13,8 @@ import org.example.ProyectoGrpc.repositorioDao.UsuarioDao;
 import org.example.ProyectoGrpc.servicio.EventoSolidarioServicio;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.myorg.kafka_module.dto.EventoDTO;
+import com.myorg.kafka_module.producer.EventoProducer;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,26 +27,73 @@ public class EventoSolidarioServicioImp implements EventoSolidarioServicio {
     private final InventarioDonacionesDao inventarioDao;
     private final DonacionesEventoDao donacionesEventoDao;
     private final UsuarioDao usuarioDao;
+    private final EventoProducer eventoProducer;
 
-    public EventoSolidarioServicioImp(EventoSolidarioDao eventoDao, InventarioDonacionesDao inventarioDao, DonacionesEventoDao donacionesEventoDao, UsuarioDao usuarioDao) {
+    public EventoSolidarioServicioImp(EventoSolidarioDao eventoDao, InventarioDonacionesDao inventarioDao, DonacionesEventoDao donacionesEventoDao, UsuarioDao usuarioDao,
+                                      EventoProducer eventoProducer) {
         this.eventoDao = eventoDao;
         this.inventarioDao = inventarioDao;
         this.donacionesEventoDao = donacionesEventoDao;
         this.usuarioDao = usuarioDao;
+        this.eventoProducer = eventoProducer;
+    }
 
+    @PostConstruct
+    public void republicarEventosExistentes() {
+
+        List<EventoSolidario> eventos = eventoDao.listarTodos();
+
+        System.out.println("====================================");
+        System.out.println("REPUBLICANDO EVENTOS EXISTENTES");
+        System.out.println("Eventos encontrados en BD: " + eventos.size());
+
+        for (EventoSolidario evento : eventos) {
+
+            EventoDTO eventoDTO = new EventoDTO();
+
+            eventoDTO.setIdOrganizacion("ONG001");
+            eventoDTO.setIdEvento(String.valueOf(evento.getId()));
+            eventoDTO.setNombreEvento(evento.getNombreEvento());
+            eventoDTO.setDescripcion(evento.getDescripcion());
+            eventoDTO.setFechaHora(evento.getFechaHoraEvento());
+
+            eventoProducer.enviarEvento(eventoDTO);
+
+            System.out.println(
+                    "Evento republicado: " +
+                            evento.getId() + " - " +
+                            evento.getNombreEvento()
+            );
+        }
+
+        System.out.println("====================================");
     }
 
     @Override
     @Transactional
     public EventoSolidario altaEvento(EventoSolidario evento) {
-        // evento.getFechahoraevento() ya es LocalDateTime
+
         LocalDateTime fechaEvento = evento.getFechaHoraEvento();
 
         if (fechaEvento.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("No se pueden crear eventos pasados");
         }
 
+        // 1. Guardamos primero en nuestra BD
         eventoDao.guardar(evento);
+
+        // 2. Armamos el mensaje que vamos a publicar en Kafka
+        EventoDTO eventoDTO = new EventoDTO();
+
+        eventoDTO.setIdOrganizacion("ONG001");
+        eventoDTO.setIdEvento(String.valueOf(evento.getId()));
+        eventoDTO.setNombreEvento(evento.getNombreEvento());
+        eventoDTO.setDescripcion(evento.getDescripcion());
+        eventoDTO.setFechaHora(evento.getFechaHoraEvento());
+
+        // 3. Publicamos el evento en Kafka
+        eventoProducer.enviarEvento(eventoDTO);
+
         return evento;
     }
 
@@ -78,8 +128,19 @@ public class EventoSolidarioServicioImp implements EventoSolidarioServicio {
     @Transactional
     public void bajaEvento(Long id) {
         EventoSolidario evento = eventoDao.buscarPorId(id);
+
         if (evento != null && evento.getFechaHoraEvento().isAfter(LocalDateTime.now())) {
+
+            EventoDTO eventoDTO = new EventoDTO();
+            eventoDTO.setIdOrganizacion("ONG001");
+            eventoDTO.setIdEvento(String.valueOf(evento.getId()));
+            eventoDTO.setNombreEvento(evento.getNombreEvento());
+            eventoDTO.setDescripcion(evento.getDescripcion());
+            eventoDTO.setFechaHora(evento.getFechaHoraEvento());
+
             eventoDao.eliminar(id);
+
+            eventoProducer.enviarBajaEvento(eventoDTO);
         }
     }
 
@@ -171,6 +232,4 @@ public class EventoSolidarioServicioImp implements EventoSolidarioServicio {
         donacion.setCantidad(cantidad);
         donacionesEventoDao.guardar(donacion);
     }
-
-
 }
