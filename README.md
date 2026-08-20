@@ -53,6 +53,13 @@ mensajes.
 - Docker
 - MySQL
 
+### Variables de entorno
+
+El proyecto utiliza variables de entorno para las credenciales del servicio de correo:
+
+- `MAIL_USERNAME`: cuenta de correo utilizada por el sistema.
+- `MAIL_PASSWORD`: contraseña o contraseña de aplicación utilizada para el envío de correos.
+
 ### Crear en Mysql una Base de datos de nombre "proyectogrpc" 
 
 ### Backend Java
