@@ -30,7 +30,7 @@ public class PrimerUsuarioLoader implements CommandLineRunner {
             presidente.setNombre("Juan");
             presidente.setApellido("Perez");
             presidente.setNombreUsuario("presidente");
-            presidente.setEmail("magosh90@gmail.com");
+            presidente.setEmail(System.getenv("MAIL_USERNAME"));
             presidente.setRol(RolUsuario.PRESIDENTE);
 
             String passwordPlano = "Presidente123";
