@@ -1,6 +1,5 @@
 package com.myorg.kafka_module.consumer;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,24 +17,16 @@ public class EventoConsumer {
 
     @KafkaListener(topics = "eventos-solidarios", groupId = "grupo_organizacion")
     public void recibirEvento(EventoDTO evento) {
-        LocalDateTime ahora = LocalDateTime.now();
 
         if (evento.getIdOrganizacion().equals(ID_ORGANIZACION_PROPIA)) {
-            
-            //para la lista de eventos propios y poder darles de baja
+
             eventosPropios.removeIf(e -> e.getIdEvento().equals(evento.getIdEvento()));
             eventosPropios.add(evento);
-            System.out.println("Evento propio guardado: " + evento.getNombreEvento());
-
-        } else if (evento.getFechaHora() != null && evento.getFechaHora().isAfter(ahora)) {
-            
-            //lista aparte de eventos externos
-            eventosExternos.removeIf(e -> e.getIdEvento().equals(evento.getIdEvento()));
-            eventosExternos.add(evento);
-            System.out.println("Evento externo recibido: " + evento.getNombreEvento());
 
         } else {
-            System.out.println("Evento descartado (propio vencido o sin fecha)");
+
+            eventosExternos.removeIf(e -> e.getIdEvento().equals(evento.getIdEvento()));
+            eventosExternos.add(evento);
         }
     }
 
