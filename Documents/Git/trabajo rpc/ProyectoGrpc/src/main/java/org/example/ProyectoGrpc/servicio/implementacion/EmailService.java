@@ -20,8 +20,6 @@ public class EmailService {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
 
-        System.out.println("MAIL_USERNAME = " + fromEmail);
-        System.out.println("MAIL_PASSWORD configurada = " + (emailPassword != null && !emailPassword.isBlank()));
 
         Session session = Session.getInstance(props, new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
