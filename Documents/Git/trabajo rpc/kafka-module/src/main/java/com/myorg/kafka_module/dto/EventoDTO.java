@@ -11,6 +11,4 @@ public class EventoDTO {
     private String nombreEvento;
     private String descripcion;
     private LocalDateTime fechaHora;
-
-    
 }
